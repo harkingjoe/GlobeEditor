@@ -29,6 +29,8 @@ public:
     // マウスドラッグによる視点回転 (Shiftなしのトラックボール回転など)
     void rotateView(int dx, int dy, float rot_sens);
 
+    void spinGlobe(int last_x, int last_y, int x, int y, float rot_sens);
+
     // スクリーン座標 (mx, my) から3D空間へのレイ (org, dir) を計算
     bool getRay(int mx, int my, Vec3* org, Vec3* dir);
 

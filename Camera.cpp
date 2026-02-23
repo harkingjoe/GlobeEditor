@@ -39,6 +39,41 @@ void Camera::rotateView(int dx, int dy, float rot_sens) {
     glPopMatrix();
 }
 
+void Camera::spinGlobe(int last_x, int last_y, int x, int y, float rot_sens) {
+    Vec3 org1, dir1, hit1;
+    bool valid1 = getRay(last_x, last_y, &org1, &dir1);
+    if (valid1) {
+        if (!hit_sph(org1, dir1, SPH_RAD, &hit1)) {
+            float t = -dot(org1, dir1);
+            hit1 = (Vec3){org1.x + dir1.x * t, org1.y + dir1.y * t, org1.z + dir1.z * t};
+        }
+    }
+
+    Vec3 org2, dir2, hit2;
+    bool valid2 = getRay(x, y, &org2, &dir2);
+    if (valid2) {
+        if (!hit_sph(org2, dir2, SPH_RAD, &hit2)) {
+            float t = -dot(org2, dir2);
+            hit2 = (Vec3){org2.x + dir2.x * t, org2.y + dir2.y * t, org2.z + dir2.z * t};
+        }
+    }
+
+    if (valid1 && valid2) {
+        float a1 = std::atan2(hit1.y, hit1.x);
+        float a2 = std::atan2(hit2.y, hit2.x);
+        
+        float diff = (a2 - a1) * 180.0f / (float)M_PI;
+        
+        if (diff > 180.0f)  diff -= 360.0f;
+        if (diff < -180.0f) diff += 360.0f;
+        
+        float r1 = std::sqrt(hit1.x * hit1.x + hit1.y * hit1.y);
+        float weight = std::sqrt(r1 / SPH_RAD); 
+        
+        spin_ang += diff * weight * rot_sens;
+    }
+}
+
 bool Camera::getRay(int mx, int my, Vec3* org, Vec3* dir) {
     GLint vp[4]; 
     GLdouble mv[16], pj[16], x, y, z;

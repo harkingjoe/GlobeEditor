@@ -14,6 +14,8 @@
 #include <vector>   // std::vector用
 
 
+extern void timerSaveCallback(int value);
+
 GlobeEditorApp::GlobeEditorApp(int w, int h) : win_w(w), win_h(h) {
     layerMgr   = new LayerManager();
     historyMgr = new HistoryManager(w, h);
@@ -137,8 +139,16 @@ void GlobeEditorApp::mouse(int btn, int state, int x, int y) {
     if (state == GLUT_DOWN) camera->stopReset();
 
     // 1. UIにクリックを渡す
-    if (uiMgr->handleMouse(btn, state, x, y, win_w, win_h, lassoTool->isActive())) {
-        checkToolSwitch(); // タブが切り替わったか確認
+    int ui_res = uiMgr->handleMouse(btn, state, x, y, win_w, win_h, lassoTool->isActive());
+    if (ui_res == 2) {
+        // Exportボタン処理
+        uiMgr->startExportMessage();
+        glutTimerFunc(50, timerSaveCallback, 1);
+        glutPostRedisplay();
+        return;
+    } else if (ui_res == 1) {
+        // 通常のUI処理
+        checkToolSwitch();
         glutPostRedisplay();
         return;
     }
@@ -165,22 +175,41 @@ void GlobeEditorApp::mouse(int btn, int state, int x, int y) {
         // ブラシモード
         if (state == GLUT_DOWN && (btn == GLUT_LEFT_BUTTON || btn == GLUT_RIGHT_BUTTON)) {
             historyMgr->push_und(layerMgr->getLayerBuffer());
-            brushTool->resetStroke(); // 描画開始時にストロークをリセット
+            brushTool->resetStroke(); 
         }
         
         if (btn == GLUT_MIDDLE_BUTTON) {
             is_rot = (state == GLUT_DOWN);
         } else if (btn == GLUT_LEFT_BUTTON) {
             is_drw = (state == GLUT_DOWN); is_ers = false;
+            UITarget cur_tool = uiMgr->getCurrentTool(); // ★現在のツールを取得
+
             if (state == GLUT_DOWN) {
-                if (key_f) { brushTool->floodFill(x, y, camera, layerMgr, uiMgr, historyMgr, false); is_drw = false; tex_dirty = true; }
-                else if (key_d) { brushTool->pickColor(x, y, camera, layerMgr, uiMgr); is_drw = false; }
+                // ★Fキー、またはUIで「Flood Fill」が選ばれている場合
+                if (key_f || cur_tool == TGT_FILL) { 
+                    brushTool->floodFill(x, y, camera, layerMgr, uiMgr, historyMgr, false); 
+                    is_drw = false; tex_dirty = true; 
+                }
+                // ★Dキー、またはUIで「Color Picker」が選ばれている場合
+                else if (key_d || cur_tool == TGT_PICKER) { 
+                    brushTool->pickColor(x, y, camera, layerMgr, uiMgr); 
+                    is_drw = false; glutPostRedisplay(); 
+                }
             }
             if (is_drw) { brushTool->paint(x, y, camera, layerMgr, uiMgr, false); tex_dirty = true; }
         } else if (btn == GLUT_RIGHT_BUTTON) {
             is_drw = (state == GLUT_DOWN); is_ers = true;
-            if (state == GLUT_DOWN && key_f) { brushTool->floodFill(x, y, camera, layerMgr, uiMgr, historyMgr, true); is_drw = false; tex_dirty = true; }
-            else if (is_drw) { brushTool->paint(x, y, camera, layerMgr, uiMgr, true); tex_dirty = true; }
+            UITarget cur_tool = uiMgr->getCurrentTool(); // ★現在のツールを取得
+
+            // 右クリックでの塗りつぶし（透明化）もUIのFillツールに連動
+            if (state == GLUT_DOWN && (key_f || cur_tool == TGT_FILL)) { 
+                brushTool->floodFill(x, y, camera, layerMgr, uiMgr, historyMgr, true); 
+                is_drw = false; tex_dirty = true; 
+            }
+            // スポイト中は右クリック描画を無効化
+            else if (is_drw && cur_tool != TGT_PICKER) { 
+                brushTool->paint(x, y, camera, layerMgr, uiMgr, true); tex_dirty = true; 
+            }
         }
     }
     
@@ -202,9 +231,14 @@ void GlobeEditorApp::motion(int x, int y) {
             camera->rotateView(dx, dy, uiMgr->getRotSens());
         }
     } else {
-        if (is_rot || (is_sft && cur_btn == GLUT_MIDDLE_BUTTON)) {
-            // トラックボール回転
-            camera->rotateView(dx, dy, uiMgr->getRotSens());
+        if (is_rot) {
+            if (is_sft) {
+                // Shift押下時: 画面の軸を基準に全体を回転 (地軸ごと傾ける)
+                camera->rotateView(dx, dy, uiMgr->getRotSens());
+            } else {
+                // 通常時: 地軸を固定して地球儀だけを自転させる
+                camera->spinGlobe(last_x, last_y, x, y, uiMgr->getRotSens());
+            }
         } else if (is_drw) {
             brushTool->paint(x, y, camera, layerMgr, uiMgr, is_ers);
             tex_dirty = true;
@@ -252,6 +286,13 @@ void GlobeEditorApp::keyboard(unsigned char key, int x, int y) {
         return; 
     }
 
+    if (key == 19) { 
+        uiMgr->startSaveMessage();
+        glutTimerFunc(50, timerSaveCallback, 0);
+        glutPostRedisplay();
+        return;
+    }
+
     if (key == 27) { // ESC
         if (uiMgr->isMenuOpen()) uiMgr->closeMenu();
         else if (lassoTool->isActive()) {
@@ -270,7 +311,8 @@ void GlobeEditorApp::keyboard(unsigned char key, int x, int y) {
     }
     
     if (key == 26) { // Ctrl+Z
-        if(historyMgr->undo(layerMgr->getLayerBuffer())) {
+        if (lassoTool->isActive()) lassoTool->exitMode(layerMgr);
+        if (historyMgr->undo(layerMgr->getLayerBuffer())) {
             layerMgr->updateCompositeAll(); tex_dirty = true;
         }
     }

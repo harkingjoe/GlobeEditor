@@ -11,6 +11,7 @@
 enum UITarget {
     TGT_NONE = -1,
     TGT_BRUSH, TGT_ERASER, TGT_LASSO,
+    TGT_FILL, TGT_PICKER,
     TGT_R, TGT_G, TGT_B
 };
 
@@ -48,7 +49,7 @@ public:
     void draw(int win_w, int win_h, bool is_lasso_mode, bool has_floating);
 
     // --- 入力処理（イベントを処理したら true を返す） ---
-    bool handleMouse(int btn, int state, int x, int y, int win_w, int win_h, bool is_lasso_mode);
+    int handleMouse(int btn, int state, int x, int y, int win_w, int win_h, bool is_lasso_mode);
     bool handleWheel(int dir, int x, int y, int win_h, bool is_lasso_mode);
     bool handleKeyboard(unsigned char key);
 

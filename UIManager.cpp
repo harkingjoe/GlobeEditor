@@ -79,7 +79,7 @@ void UIManager::updateMessageTimer() {
 // ---------------------------------------------------------
 // 入力処理（戻り値 true ならイベント消費済み）
 // ---------------------------------------------------------
-bool UIManager::handleMouse(int btn, int state, int x, int y, int win_w, int win_h, bool is_lasso_mode) {
+int UIManager::handleMouse(int btn, int state, int x, int y, int win_w, int win_h, bool is_lasso_mode) {
     if (state == GLUT_DOWN && active_target != TGT_NONE) {
         active_target = TGT_NONE; input_str = "";
     }
@@ -90,7 +90,7 @@ bool UIManager::handleMouse(int btn, int state, int x, int y, int win_w, int win
         if (x >= bx && x <= bx + MAN_BW && y >= MAN_MG && y <= MAN_MG + MAN_BH) {
             show_menu = !show_menu; 
             if (show_menu) menu_scroll_y = 0.0f; 
-            return true;
+            return 1;
         }
 
         if (show_menu) {
@@ -99,7 +99,7 @@ bool UIManager::handleMouse(int btn, int state, int x, int y, int win_w, int win
             for (int i = 0; i < 3; i++) {
                 float b = bx_st + i * (F_BTN_SZ + F_BTN_GP);
                 if (x >= b && x <= b + F_BTN_SZ && y >= by && y <= by + F_BTN_SZ) { 
-                    font_idx = i; return true; 
+                    font_idx = i; return 1; 
                 }
             }
             // Sensitivity buttons
@@ -111,36 +111,37 @@ bool UIManager::handleMouse(int btn, int state, int x, int y, int win_w, int win
                     if (i == 0) rot_sens = 0.5f;     
                     else if (i == 1) rot_sens = 1.0f;
                     else rot_sens = 2.0f;             
-                    return true; 
+                    return 1; 
                 }
             }
-            return true; // メニュー開閉時は他のクリックを無視
+            return 1; // メニュー開閉時は他のクリックを無視
         }
 
-        // Exportボタン判定は外部でやっても良いが、UI側で領域だけ確保
+        // Exportボタン判定
         float ex_w = 80; float ex_h = 30; float ex_m = 20;
         float ex_x = win_w - ex_w - ex_m;
         float ex_y = win_h - ex_h - ex_m;
         if (x >= ex_x && x <= ex_x + ex_w && y >= ex_y && y <= ex_y + ex_h) {
-            // 本来はコールバックを呼ぶか、状態を変える
-            // ここでは外側で exp_img() を呼んでもらうために false を返す手もあるが
-            // 設計上、App側で領域判定する方が楽なのでここでは省略
+            return 2; // 2 = Exportボタンが押された
         }
 
         // タブ切り替え
-        UITarget top_tgts[] = {TGT_BRUSH, TGT_ERASER, TGT_LASSO};
-        for (int i = 0; i < 3; i++) {
+        UITarget top_tgts[] = {TGT_BRUSH, TGT_ERASER, TGT_LASSO, TGT_FILL, TGT_PICKER};
+        for (int i = 0; i < 5; i++) { 
             int ty = UI_BY + i * (UI_H + UI_GAP);
             if (x >= UI_BX && x <= UI_BX + UI_W && y >= ty && y <= ty + UI_H) {
                 current_tool = top_tgts[i];
-                if (current_tool != TGT_LASSO) {
+                // ブラシと消しゴム以外は、数値入力をアクティブにしない
+                if (current_tool == TGT_BRUSH || current_tool == TGT_ERASER) {
                     active_target = top_tgts[i];
-                    input_str = "";
+                } else {
+                    active_target = TGT_NONE;
                 }
-                return true; // タブがクリックされた
+                input_str = "";
+                return 1; // タブがクリックされた
             }
         }
-
+        
         // RGB変更
         UITarget rgb_tgts[] = {TGT_R, TGT_G, TGT_B};
         int base_y = win_h - UI_RGB_MARGIN_B;
@@ -148,15 +149,15 @@ bool UIManager::handleMouse(int btn, int state, int x, int y, int win_w, int win
             int ry = base_y + i * (UI_H + UI_GAP);
             if (x >= UI_BX && x <= UI_BX + UI_W && y >= ry && y <= ry + UI_H) {
                 active_target = rgb_tgts[i]; input_str = ""; 
-                return true;
+                return 1;
             }
         }
         
         // UI領域をクリックしたかどうか
-        bool on_ui = (x < UI_BX + UI_W + 20) && ((y < UI_BY + 150) || (y > win_h - UI_RGB_MARGIN_B));
-        if (on_ui) return true;
+        bool on_ui = (x < UI_BX + UI_W + 20) && ((y < UI_BY + 250) || (y > win_h - UI_RGB_MARGIN_B));
+        if (on_ui) return 1;
     }
-    return false;
+    return 0;
 }
 
 bool UIManager::handleWheel(int dir, int x, int y, int win_h, bool is_lasso_mode) {
@@ -297,10 +298,10 @@ void UIManager::draw(int win_w, int win_h, bool is_lasso_mode, bool has_floating
 
     // Tabs
     char buf[64];
-    const char* top_lbls[] = {"Brush Size", "Eraser Size", "Lasso Tool"};
-    UITarget top_tgts[] = {TGT_BRUSH, TGT_ERASER, TGT_LASSO};
+    const char* top_lbls[] = {"Brush Size", "Eraser Size", "Lasso Tool", "Flood Fill", "Color Picker"};
+    UITarget top_tgts[] = {TGT_BRUSH, TGT_ERASER, TGT_LASSO, TGT_FILL, TGT_PICKER};
     
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 5; i++) {
         int ty = UI_BY + i * (UI_H + UI_GAP);
         bool isActive = (current_tool == top_tgts[i]);
         if (isActive) glColor3f(1,1,1); else glColor3f(0.8f,0.8f,0.8f);
@@ -325,7 +326,8 @@ void UIManager::draw(int win_w, int win_h, bool is_lasso_mode, bool has_floating
                 std::sprintf(buf, "%.0f", val); drawStr(UI_BX+UI_W-UI_NUM_X, ty+25, buf);
             }
         } else {
-            if (is_lasso_mode) drawStr(UI_BX+UI_W-80, ty+25, "(Active)");
+            // ★修正: Lasso, Fill, Picker の場合は (Active) を表示
+            if (isActive) drawStr(UI_BX+UI_W-80, ty+25, "(Active)");
         }
     }
 
@@ -459,12 +461,17 @@ void UIManager::drawMenu(int win_w, int win_h) {
     int sc_h = std::max(0, win_h - top_margin - bottom_margin);
     glScissor(40, bottom_margin, win_w-80, sc_h);
     
+    
     float start_ty = 180.0f;
     float tx = 70; float ty = start_ty - menu_scroll_y;
     float step = (float)getLineStep();
     float half_step = step * 0.5f;
     
-    glColor3f(1.0f, 1.0f, 1.0f); drawStr(tx, ty, "=== Operation Manual ==="); ty += step + half_step;
+    // --- メニューテキスト描画 ---
+    glColor3f(1.0f, 1.0f, 1.0f); 
+    drawStr(tx, ty, "=== Operation Manual ==="); ty += step + half_step;
+    
+    // 1. 視点操作
     glColor3f(0.7f, 0.8f, 1.0f); drawStr(tx, ty, "[ View & Camera ]"); ty += step;
     glColor3f(1,1,1);
     drawStr(tx, ty, "  Mid-Drag : Rotate Globe"); ty += step;
@@ -472,18 +479,29 @@ void UIManager::drawMenu(int win_w, int win_h) {
     drawStr(tx, ty, "  Wheel : Zoom In / Out"); ty += step;
     drawStr(tx, ty, "  R Key : Reset View"); ty += step; ty += half_step;
     
-    glColor3f(0.7f, 1.0f, 0.7f); drawStr(tx, ty, "[ Brush & Eraser ]"); ty += step;
+    // 2. ツール操作 (UIタブと連動)
+    glColor3f(0.7f, 1.0f, 0.7f); drawStr(tx, ty, "[ Tools (Select via Tabs) ]"); ty += step;
     glColor3f(1,1,1);
-    drawStr(tx, ty, "  Left Drag  : Draw"); ty += step;
-    drawStr(tx, ty, "  Right Drag : Erase"); ty += step; ty += half_step;
+    drawStr(tx, ty, "  Brush / Eraser : Left Drag (Draw) / Right Drag (Erase)"); ty += step;
+    drawStr(tx, ty, "  Lasso Tool     : Left Drag (Select) / Right Drag (Move)"); ty += step;
+    drawStr(tx, ty, "  Flood Fill     : Left Click (Fill) / Right Click (Erase Fill)"); ty += step;
+    drawStr(tx, ty, "  Color Picker   : Left Click (Pick Color)"); ty += step; ty += half_step;
     
-    glColor3f(1.0f, 0.7f, 0.7f); drawStr(tx, ty, "[ Lasso Tool ]"); ty += step;
+    // 3. ショートカットキー群
+    glColor3f(0.9f, 0.8f, 1.0f); drawStr(tx, ty, "[ Shortcuts ]"); ty += step;
     glColor3f(1,1,1);
-    drawStr(tx, ty, "  Left Drag  : Select Area"); ty += step;
-    drawStr(tx, ty, "  Right Drag : Move Selection"); ty += step; ty += half_step;
+    drawStr(tx, ty, "  F / D Key : Temp Flood Fill / Color Picker"); ty += step;
+    drawStr(tx, ty, "  Ctrl+Z / Ctrl+Y : Undo / Redo"); ty += step;
+    drawStr(tx, ty, "  Ctrl+S : Save Project"); ty += step;
+    drawStr(tx, ty, "  I Key  : Import Image (as Lasso)"); ty += step;
+    drawStr(tx, ty, "  L Key  : Load Middle Layer"); ty += step;
+    drawStr(tx, ty, "  Shift + R Key : Clear Canvas"); ty += step;
+    drawStr(tx, ty, "  Shift + ESC : Exit Program"); ty += step; ty += step;
     
+    // 閉じる案内
     glColor3f(1.0f, 1.0f, 0.0f); drawStr(tx, ty, "Click 'Help' button again to close.");
     
+    // スクロールの最大値をテキストの最終位置から計算
     float final_y_pos = (ty + step + menu_scroll_y);
     float view_bottom_y = (float)(win_h - bottom_margin);
     max_scroll_y = std::max(0.0f, (final_y_pos + 50) - view_bottom_y);

@@ -1,7 +1,7 @@
 #include "GlobeEditorApp.h"
 #include <GL/freeglut.h>
 
-// アプリケーション全体を管理するグローバルポインタ（これ1つだけ！）
+// アプリケーション全体を管理するグローバルポインタ
 GlobeEditorApp* g_app = nullptr;
 
 // ---------------------------------------------------------

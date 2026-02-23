@@ -11,7 +11,7 @@ class HistoryManager {
 private:
     std::vector<unsigned char*> u_stk; // Undoスタック
     std::vector<unsigned char*> r_stk; // Redoスタック
-    const int MAX_HIST = 20;
+    const size_t MAX_HIST = 20;
     size_t data_size; // 画像1枚分のバイト数 (width * height * 4)
 
 public:

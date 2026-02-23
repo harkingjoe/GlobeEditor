@@ -53,8 +53,10 @@ void BrushTool::applyBrush(float u, float v, LayerManager* layerMgr, UIManager* 
                 img_layer[idx+2] = col[2];
                 img_layer[idx+3] = 255;
             }
-            if (dx < min_x) min_x = dx; if (dx > max_x) max_x = dx;
-            if (dy < min_y) min_y = dy; if (dy > max_y) max_y = dy;
+            if (dx < min_x) { min_x = dx; }
+            if (dx > max_x) { max_x = dx; }
+            if (dy < min_y) { min_y = dy; }
+            if (dy > max_y) { max_y = dy; }
         }
     }
     

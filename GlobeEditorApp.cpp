@@ -53,6 +53,8 @@ void GlobeEditorApp::init() {
     // HistoryManager に正しいデータサイズを知らせるため再確保
     delete historyMgr;
     historyMgr = new HistoryManager(layerMgr->getWidth(), layerMgr->getHeight());
+
+    tex_dirty = true;
 }
 
 void GlobeEditorApp::display() {

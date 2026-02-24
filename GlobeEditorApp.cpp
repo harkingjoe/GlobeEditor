@@ -281,8 +281,14 @@ void GlobeEditorApp::keyboard(unsigned char key, int x, int y) {
 
     // ショートカットキー
     if (key == 'i' || key == 'I') { importImage(); return; }
-    if (key == 'l' || key == 'L') { 
+    if (key == 'l') { // 小文字 (そのままLキー)
         if(layerMgr->loadMiddleLayer(MID_F)) tex_dirty = true; 
+        return; 
+    }
+    if (key == 'L') { // 大文字 (Shift + Lキー)
+        layerMgr->unloadMiddleLayer();
+        tex_dirty = true;
+        glutPostRedisplay();
         return; 
     }
 

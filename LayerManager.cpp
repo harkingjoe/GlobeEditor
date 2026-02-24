@@ -106,6 +106,15 @@ bool LayerManager::loadMiddleLayer(const char* fname) {
     return false;
 }
 
+void LayerManager::unloadMiddleLayer() {
+    if (img_middle) {
+        std::free(img_middle);
+        img_middle = nullptr;
+        updateCompositeAll(); // 中間レイヤーがない状態で再合成
+        printf("Unloaded middle layer.\n");
+    }
+}
+
 void LayerManager::updateCompositeRect(int x, int y, int w, int h) {
     if (!img_comp) return;
     int sx = std::max(0, x);

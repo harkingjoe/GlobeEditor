@@ -494,7 +494,7 @@ void UIManager::drawMenu(int win_w, int win_h) {
     drawStr(tx, ty, "  Ctrl+Z / Ctrl+Y : Undo / Redo"); ty += step;
     drawStr(tx, ty, "  Ctrl+S : Save Project"); ty += step;
     drawStr(tx, ty, "  I Key  : Import Image (as Lasso)"); ty += step;
-    drawStr(tx, ty, "  L Key  : Load Middle Layer"); ty += step;
+    drawStr(tx, ty, "  L / Shift+L : Load / Unload Middle Layer"); ty += step;
     drawStr(tx, ty, "  Shift + R Key : Clear Canvas"); ty += step;
     drawStr(tx, ty, "  Shift + ESC : Exit Program"); ty += step; ty += step;
     

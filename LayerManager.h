@@ -26,6 +26,8 @@ public:
     bool loadLayer(const char* fname);
     bool loadMiddleLayer(const char* fname);
 
+    void unloadMiddleLayer();
+
     // 合成処理
     void updateCompositeRect(int x, int y, int w, int h);
     void updateCompositeAll();

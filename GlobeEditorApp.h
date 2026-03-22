@@ -4,7 +4,7 @@
 #define __GLOBEEDITORAPP_H_
 
 
-// 前方宣言（ヘッダの依存関係を減らすため）
+// 前方宣言
 class LayerManager;
 class HistoryManager;
 class Camera;

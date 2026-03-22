@@ -65,7 +65,14 @@ bool LayerManager::loadLayer(const char* fname) {
     if (!dat) return false;
 
     if (w == img_w && h == img_h) {
-        std::memcpy(img_layer, dat, w * h * 4);
+        // ★修正: 単純なmemcpyではなく、上下反転してimg_layerに読み込む
+        int stride = w * 4;
+        for (int y = 0; y < h; y++) {
+            unsigned char* src_row = dat + (y * stride);                     // 元画像のy行目
+            unsigned char* dst_row = img_layer + ((h - 1 - y) * stride); // 貼り付け先の下からy行目
+            std::memcpy(dst_row, src_row, stride);
+        }
+        
         updateCompositeAll();
         printf("Loaded layer: %s\n", fname);
         stbi_image_free(dat);

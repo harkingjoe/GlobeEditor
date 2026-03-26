@@ -65,7 +65,6 @@ bool LayerManager::loadLayer(const char* fname) {
     if (!dat) return false;
 
     if (w == img_w && h == img_h) {
-        // ★修正: 単純なmemcpyではなく、上下反転してimg_layerに読み込む
         int stride = w * 4;
         for (int y = 0; y < h; y++) {
             unsigned char* src_row = dat + (y * stride);                     // 元画像のy行目

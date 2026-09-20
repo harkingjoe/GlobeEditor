@@ -142,8 +142,28 @@ void LassoTool::cutSelection(Camera* camera) {
         }
     }
 
+    // --- ★ここから追加 ---
+    // カメラの現在の変換行列（ModelView行列）を取得
+    GLdouble mv[16];
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    camera->applyTransform();
+    glGetDoublev(GL_MODELVIEW_MATRIX, mv);
+    glPopMatrix();
+    
+    // パースペクティブ投影における球の可視境界（地平線）のZ座標を計算
+    float cam_d = camera->getCamDist();
+    double threshold_z = -cam_d + (SPH_RAD * SPH_RAD) / cam_d;
+    // ----------------------
+
     floats.clear();
     auto it = std::remove_if(points.begin(), points.end(), [&](CloudPoint &cp){
+        // --- ★ここから追加 ---
+        // 点 cp.p をビュー座標系のZ値に変換し、裏側（しきい値より奥）にある点は無視する
+        double view_z = mv[2]*cp.p.x + mv[6]*cp.p.y + mv[10]*cp.p.z + mv[14];
+        if (view_z < threshold_z) return false; 
+        // ----------------------
+
         float sx, sy;
         if(camera->projectToScreen(cp.p, &sx, &sy)) {
             if(isInPolyScreen(sx, sy)) {

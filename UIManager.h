@@ -40,6 +40,11 @@ private:
     bool is_exporting;
     int last_msg_type; // 0=None, 1=Save(Project), 2=Export
 
+    // --- ★ 面積比表示用 ---
+    float land_ratio;
+    float ocean_ratio;
+    bool has_ratio;
+
 public:
     UIManager();
     ~UIManager();
@@ -58,6 +63,13 @@ public:
     void startExportMessage();
     void finishMessage(int type); // type: 1=Save, 2=Export
     void updateMessageTimer();
+    
+    // ★ 面積比をセットする関数
+    void setAreaRatio(float land, float ocean) {
+        land_ratio = land;
+        ocean_ratio = ocean;
+        has_ratio = true;
+    }
 
     // --- 外部からUIの状態を取得するためのゲッター ---
     UITarget getCurrentTool() const { return current_tool; }

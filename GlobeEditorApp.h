@@ -68,6 +68,7 @@ private:
     // 内部ヘルパー
     void checkToolSwitch();
     void importImage();
+    void calculateAreaRatio(); // ★ 追加
 };
 
 #endif

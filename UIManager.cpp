@@ -46,6 +46,11 @@ UIManager::UIManager() {
     is_saving = false;
     is_exporting = false;
     last_msg_type = 0;
+
+    // ★ 追加
+    land_ratio = 0.0f;
+    ocean_ratio = 0.0f;
+    has_ratio = false;
 }
 
 UIManager::~UIManager() {}
@@ -370,6 +375,35 @@ void UIManager::draw(int win_w, int win_h, bool is_lasso_mode, bool has_floating
     glVertex2f(ex_x+ex_w, ex_y+ex_h); glVertex2f(ex_x, ex_y+ex_h); 
     glEnd();
     drawStr(ex_x + 18, ex_y + 20, "Export"); 
+
+    // ★ 面積比の表示 (Exportボタンの左側に配置)
+    // ★ 面積比の表示 (Exportボタンの左側に配置)
+    if (has_ratio) {
+        char land_str[32];
+        char ocean_str[32];
+        std::sprintf(land_str, "Land   : %.1f%%", land_ratio);
+        std::sprintf(ocean_str, "Ocean: %.1f%%", ocean_ratio);
+        
+        float ratio_w = 140.0f; // 枠の幅を少し縮める
+        float ratio_h = 46.0f;  // 2行入るように枠の高さを広げる
+        float rx = ex_x - ratio_w - 10.0f;  // Exportボタンの10px左
+        float ry = (ex_y + ex_h) - ratio_h; // 底辺をExportボタンに揃える
+        
+        // 背景を描画して文字を見やすくする
+        glEnable(GL_BLEND);
+        glColor4f(0.0f, 0.0f, 0.0f, 0.7f);
+        glRectf(rx, ry, rx + ratio_w, ry + ratio_h);
+        
+        glColor3f(1.0f, 1.0f, 1.0f);
+        glBegin(GL_LINE_LOOP); 
+        glVertex2f(rx, ry); glVertex2f(rx+ratio_w, ry);
+        glVertex2f(rx+ratio_w, ry+ratio_h); glVertex2f(rx, ry+ratio_h); 
+        glEnd();
+        
+        // 2段に分けてテキストを描画
+        drawStr(rx + 15, ry + 20, land_str);
+        drawStr(rx + 15, ry + 40, ocean_str);
+    }
 
     // Messages
     if (save_msg_timer > 0) {

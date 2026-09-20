@@ -39,6 +39,7 @@ GlobeEditorApp::~GlobeEditorApp() {
     delete brushTool;
 }
 
+
 void GlobeEditorApp::init() {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glEnable(GL_DEPTH_TEST);
@@ -55,6 +56,9 @@ void GlobeEditorApp::init() {
     // HistoryManager に正しいデータサイズを知らせるため再確保
     delete historyMgr;
     historyMgr = new HistoryManager(layerMgr->getWidth(), layerMgr->getHeight());
+
+    // ★ 初期ロード時にも面積比を計算してUIに渡す
+    calculateAreaRatio();
 
     tex_dirty = true;
 }
@@ -393,6 +397,9 @@ void GlobeEditorApp::performSaveTask(int type) {
         was_lasso = true;
     }
 
+    // ★ セーブ時に面積比を計算
+    calculateAreaRatio();
+
     if (type == 0) {
         layerMgr->saveLayer(LYR_F);
         uiMgr->finishMessage(1);
@@ -403,4 +410,40 @@ void GlobeEditorApp::performSaveTask(int type) {
 
     if (was_lasso) lassoTool->enterMode(layerMgr);
     glutPostRedisplay();
+}
+
+void GlobeEditorApp::calculateAreaRatio() {
+    int w = layerMgr->getWidth();
+    int h = layerMgr->getHeight();
+    unsigned char* layer = layerMgr->getLayerBuffer();
+    if (!layer || w == 0 || h == 0) return;
+
+    double land_area = 0.0;
+    double ocean_area = 0.0;
+
+    for (int y = 0; y < h; y++) {
+        // Y座標から緯度(lat)を求める。vは画像上端から下端へ 0.0 ~ 1.0
+        float v = (y + 0.5f) / (float)h;
+        float lat = (v - 0.5f) * M_PI;
+        // 重み付けは緯度のコサイン
+        double weight = std::cos(lat);
+
+        int row_idx = y * w * 4;
+        for (int x = 0; x < w; x++) {
+            // アルファ値(A)を取得
+            unsigned char alpha = layer[row_idx + x * 4 + 3];
+            if (alpha > 0) {
+                land_area += weight;   // 塗られている場合は陸地
+            } else {
+                ocean_area += weight;  // 透過部分は海洋
+            }
+        }
+    }
+
+    double total = land_area + ocean_area;
+    if (total > 0.0) {
+        float land_ratio = (float)((land_area / total) * 100.0);
+        float ocean_ratio = (float)((ocean_area / total) * 100.0);
+        uiMgr->setAreaRatio(land_ratio, ocean_ratio);
+    }
 }

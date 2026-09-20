@@ -162,17 +162,20 @@ void GlobeEditorApp::mouse(int btn, int state, int x, int y) {
         if (btn == GLUT_LEFT_BUTTON) {
             if (state == GLUT_DOWN) {
                 if (lassoTool->hasFloating()) {
-                    lassoTool->pasteSelection();
+                    /* lassoTool->pasteSelection();
                     // 確定したらブラシモードに戻す
                     lassoTool->exitMode(layerMgr);
                     uiMgr->setCurrentTool(TGT_BRUSH);
-                    tex_dirty = true;
+                    tex_dirty = true; */
                 } else {
                     lassoTool->startSelection(x, y);
                 }
             } else if (state == GLUT_UP) {
-                lassoTool->cutSelection(camera);
-                tex_dirty = true;
+                // ★ 修正: まだ切り取っていない時だけ cutSelection を呼ぶ
+                if (!lassoTool->hasFloating()) { 
+                    lassoTool->cutSelection(camera);
+                    tex_dirty = true;
+                }
             }
         }
     } else {
@@ -229,10 +232,17 @@ void GlobeEditorApp::motion(int x, int y) {
     if (lassoTool->isActive()) {
         if (!lassoTool->hasFloating() && cur_btn == GLUT_LEFT_BUTTON) {
             lassoTool->recordSelection(x, y);
-        } else if (lassoTool->hasFloating() && cur_btn == GLUT_RIGHT_BUTTON) {
+        } else if (lassoTool->hasFloating() && cur_btn == GLUT_LEFT_BUTTON) {
             lassoTool->moveSelection(dx, dy, camera);
+        } else if (lassoTool->hasFloating() && cur_btn == GLUT_RIGHT_BUTTON) { 
+            // ★ 引数を dx, dy から last_x, last_y, x, y に変更
+            lassoTool->rotateSelection(last_x, last_y, x, y, camera);
         } else if (cur_btn == GLUT_MIDDLE_BUTTON || (cur_btn == GLUT_LEFT_BUTTON && is_sft)) {
             camera->rotateView(dx, dy, uiMgr->getRotSens());
+            // ★ 追加: カメラが回転したら、画面上の点線枠も追従させる
+            if (lassoTool->hasFloating()) {
+                lassoTool->updateScreenPath(camera);
+            }
         }
     } else {
         if (is_rot) {
@@ -281,6 +291,18 @@ void GlobeEditorApp::keyboard(unsigned char key, int x, int y) {
     // UIへ入力文字を渡す
     if (uiMgr->handleKeyboard(key)) {
         glutPostRedisplay(); return;
+    }
+
+    // ★ 追加: Lassoモード中でEnterキーが押されたら確定
+    if (key == 13) { 
+        if (lassoTool->isActive() && lassoTool->hasFloating()) {
+            lassoTool->pasteSelection();
+            lassoTool->exitMode(layerMgr);
+            uiMgr->setCurrentTool(TGT_BRUSH);
+            tex_dirty = true;
+            glutPostRedisplay();
+        }
+        return;
     }
 
     // ショートカットキー

@@ -45,7 +45,9 @@ public:
     void cutSelection(Camera* camera);
     void scaleSelection(float scale_factor, Camera* camera);
     void moveSelection(int dx, int dy, Camera* camera);
+    void rotateSelection(int last_x, int last_y, int x, int y, Camera* camera); // ★ 追加
     void pasteSelection();
+    void updateScreenPath(Camera* camera); // ★ 追加
 
     // 外部から画像をインポートしたときの処理（旧: imp_img の一部）
     void importFloatingPoints(const std::vector<CloudPoint>& new_floats);

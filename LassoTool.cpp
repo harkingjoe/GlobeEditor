@@ -251,6 +251,50 @@ void LassoTool::moveSelection(int dx, int dy, Camera* camera) {
     }
 }
 
+void LassoTool::rotateSelection(int last_x, int last_y, int x, int y, Camera* camera) {
+    if (!has_floating || floats.empty()) return;
+
+    // 1. 点群の重心（3D空間上の回転軸）を求める
+    Vec3 sum = {0,0,0};
+    for (const auto& cp : floats) sum = add(sum, cp.p);
+    Vec3 cen_dir = normalize(sum);
+    Vec3 cen = {cen_dir.x * SPH_RAD, cen_dir.y * SPH_RAD, cen_dir.z * SPH_RAD};
+
+    // 2. 重心をスクリーン座標に投影し、画面上での回転中心(cx, cy)を求める
+    float cx, cy;
+    if (!camera->projectToScreen(cen, &cx, &cy)) return;
+
+    // 3. 回転中心から見た、前回と今回のマウスの角度を計算
+    float a1 = std::atan2(last_y - cy, last_x - cx);
+    float a2 = std::atan2(y - cy, x - cx);
+    float diff = a2 - a1;
+
+    // 角度の境界(-180度 ⇔ 180度)を跨いだ時のラップアラウンド補正
+    if (diff > M_PI) diff -= 2.0f * M_PI;
+    if (diff < -M_PI) diff += 2.0f * M_PI;
+
+    // 画面のY軸は下向きなので、diffが正＝画面上で時計回り。
+    // 一方、3D空間の手前向き法線を軸とする回転は「反時計回り」が正になるため符号を反転する。
+    float ang = -diff; 
+
+    // 4. 回転を適用
+    for(auto &cp : floats) {
+        cp.p = rotate_point(cp.p, cen_dir, ang);
+    }
+    for(auto &p3 : lasso_path_3d) {
+        p3 = rotate_point(p3, cen_dir, ang);
+    }
+
+    // 5. 画面の枠線を更新
+    lasso_path.clear();
+    for(auto &p3 : lasso_path_3d) {
+        float sx, sy;
+        if (camera->projectToScreen(p3, &sx, &sy)) {
+            lasso_path.push_back({sx, sy});
+        }
+    }
+}
+
 void LassoTool::pasteSelection() {
     if (!has_floating) return;
     
@@ -260,6 +304,19 @@ void LassoTool::pasteSelection() {
     has_floating = false;
     lasso_path.clear();
     lasso_path_3d.clear();
+}
+
+void LassoTool::updateScreenPath(Camera* camera) {
+    if (!has_floating) return;
+    
+    // 3D空間の枠線データを元に、現在のカメラ視点での2D画面座標を再計算する
+    lasso_path.clear();
+    for (auto &p3 : lasso_path_3d) {
+        float sx, sy;
+        if (camera->projectToScreen(p3, &sx, &sy)) {
+            lasso_path.push_back({sx, sy});
+        }
+    }
 }
 
 void LassoTool::importFloatingPoints(const std::vector<CloudPoint>& new_floats) {

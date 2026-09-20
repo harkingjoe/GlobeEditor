@@ -517,7 +517,7 @@ void UIManager::drawMenu(int win_w, int win_h) {
     glColor3f(0.7f, 1.0f, 0.7f); drawStr(tx, ty, "[ Tools (Select via Tabs) ]"); ty += step;
     glColor3f(1,1,1);
     drawStr(tx, ty, "  Brush / Eraser : Left Drag (Draw) / Right Drag (Erase)"); ty += step;
-    drawStr(tx, ty, "  Lasso Tool     : Left Drag (Select) / Right Drag (Move)"); ty += step;
+    drawStr(tx, ty, "  Lasso Tool     : Left(Select/Move) / Right(Rotate) / Enter(Apply)"); ty += step;    // ★ ここを変更
     drawStr(tx, ty, "  Flood Fill     : Left Click (Fill) / Right Click (Erase Fill)"); ty += step;
     drawStr(tx, ty, "  Color Picker   : Left Click (Pick Color)"); ty += step; ty += half_step;
     

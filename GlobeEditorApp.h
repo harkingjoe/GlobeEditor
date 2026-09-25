@@ -25,7 +25,7 @@ private:
     // --- アプリケーションの状態 ---
     int win_w, win_h;
     int last_x, last_y;
-    int cur_btn;
+    int btn_mask; // 押下中のマウスボタン (1 << GLUT_xxx_BUTTON のビットの組み合わせ)
     
     bool is_sft;  // Shiftキーが押されているか
     bool is_rot;  // 中ボタンで回転中か

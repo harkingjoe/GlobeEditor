@@ -24,7 +24,7 @@ GlobeEditorApp::GlobeEditorApp(int w, int h) : win_w(w), win_h(h) {
     lassoTool  = new LassoTool();
     brushTool  = new BrushTool();
 
-    last_x = 0; last_y = 0; cur_btn = -1;
+    last_x = 0; last_y = 0; btn_mask = 0;
     is_sft = is_rot = is_drw = is_ers = false;
     key_f = key_d = key_c = false;
     tex_dirty = false;
@@ -87,7 +87,7 @@ void GlobeEditorApp::display() {
     gluDeleteQuadric(q);
     
     // 4. ツールごとの追加描画 (Lassoの点群など)
-    lassoTool->draw(camera, win_w, win_h);
+    lassoTool->draw();
     
     // 5. UIの描画 (画面の手前に2Dで描画)
     uiMgr->draw(win_w, win_h, lassoTool->isActive(), lassoTool->hasFloating());
@@ -137,7 +137,11 @@ void GlobeEditorApp::checkToolSwitch() {
 }
 
 void GlobeEditorApp::mouse(int btn, int state, int x, int y) {
-    if (state == GLUT_DOWN) cur_btn = btn; else if (state == GLUT_UP) cur_btn = -1;
+    // 複数ボタンの同時押し (左ドラッグ中のホイールドラッグ等) に対応するため、ビットで管理する
+    if (btn >= 0 && btn < 3) {
+        if (state == GLUT_DOWN) btn_mask |= (1 << btn);
+        else if (state == GLUT_UP) btn_mask &= ~(1 << btn);
+    }
     is_sft = (glutGetModifiers() & GLUT_ACTIVE_SHIFT);
 
     if (state == GLUT_DOWN) camera->stopReset();
@@ -167,13 +171,14 @@ void GlobeEditorApp::mouse(int btn, int state, int x, int y) {
                     lassoTool->exitMode(layerMgr);
                     uiMgr->setCurrentTool(TGT_BRUSH);
                     tex_dirty = true; */
-                } else {
-                    lassoTool->startSelection(x, y);
+                } else if (!is_sft) {
+                    // Shift+左ドラッグは視点回転なので選択を開始しない
+                    lassoTool->startSelection(x, y, camera);
                 }
             } else if (state == GLUT_UP) {
-                // ★ 修正: まだ切り取っていない時だけ cutSelection を呼ぶ
-                if (!lassoTool->hasFloating()) { 
-                    lassoTool->cutSelection(camera);
+                // ★ 修正: 選択中の時だけ cutSelection を呼ぶ
+                if (lassoTool->isSelecting()) { 
+                    lassoTool->cutSelection();
                     tex_dirty = true;
                 }
             }
@@ -230,18 +235,26 @@ void GlobeEditorApp::motion(int x, int y) {
     int dx = x - last_x; int dy = y - last_y;
 
     if (lassoTool->isActive()) {
-        if (!lassoTool->hasFloating() && cur_btn == GLUT_LEFT_BUTTON) {
-            lassoTool->recordSelection(x, y);
-        } else if (lassoTool->hasFloating() && cur_btn == GLUT_LEFT_BUTTON) {
-            lassoTool->moveSelection(dx, dy, camera);
-        } else if (lassoTool->hasFloating() && cur_btn == GLUT_RIGHT_BUTTON) { 
-            // ★ 引数を dx, dy から last_x, last_y, x, y に変更
-            lassoTool->rotateSelection(last_x, last_y, x, y, camera);
-        } else if (cur_btn == GLUT_MIDDLE_BUTTON || (cur_btn == GLUT_LEFT_BUTTON && is_sft)) {
+        bool btn_l = btn_mask & (1 << GLUT_LEFT_BUTTON);
+        bool btn_m = btn_mask & (1 << GLUT_MIDDLE_BUTTON);
+        bool btn_r = btn_mask & (1 << GLUT_RIGHT_BUTTON);
+
+        // 視点回転 (ホイールドラッグ / Shift+左ドラッグ)
+        // 枠線は球面上の3D座標で保持しているため、視点を動かしても地球上の位置からずれない
+        bool rotating = btn_m || (btn_l && is_sft && !lassoTool->isSelecting());
+        if (rotating) {
             camera->rotateView(dx, dy, uiMgr->getRotSens());
-            // ★ 追加: カメラが回転したら、画面上の点線枠も追従させる
-            if (lassoTool->hasFloating()) {
-                lassoTool->updateScreenPath(camera);
+        }
+
+        if (lassoTool->isSelecting()) {
+            // 左ボタンを押したままなら、視点移動中も選択を継続する
+            if (btn_l) lassoTool->recordSelection(x, y, camera);
+        } else if (lassoTool->hasFloating() && !rotating) {
+            if (btn_l) {
+                lassoTool->moveSelection(dx, dy, camera);
+            } else if (btn_r) {
+                // ★ 引数を dx, dy から last_x, last_y, x, y に変更
+                lassoTool->rotateSelection(last_x, last_y, x, y, camera);
             }
         }
     } else {
@@ -278,6 +291,11 @@ void GlobeEditorApp::wheel(int whl, int dir, int x, int y) {
     // カメラズーム
     float zoom_delta = (dir > 0) ? 0.5f : -0.5f;
     camera->addCamDist(zoom_delta);
+
+    // 選択中にズームした場合は、カーソル位置までの枠線を継続する
+    if (lassoTool->isActive() && lassoTool->isSelecting()) {
+        lassoTool->recordSelection(x, y, camera);
+    }
     glutPostRedisplay();
 }
 

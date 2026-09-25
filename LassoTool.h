@@ -23,8 +23,8 @@ private:
     bool is_selecting;       // 選択の枠線を描いている途中か
     bool has_floating;       // 切り取られた浮遊点群があるか
 
-    std::vector<Vec3> lasso_path_3d; // 枠線の3D座標
-    std::vector<UVPoint> lasso_path; // UI表示用(スクリーン座標)
+    // 枠線の3D座標 (球面上)。視点が変わっても地球上の位置に固定される
+    std::vector<Vec3> lasso_path_3d;
     
     std::vector<CloudPoint> points;  // レイヤー全体の点群
     std::vector<CloudPoint> floats;  // 切り取られた浮遊点群
@@ -38,28 +38,27 @@ public:
     void exitMode(LayerManager* layerMgr);
     bool isActive() const { return is_active; }
     bool hasFloating() const { return has_floating; }
+    bool isSelecting() const { return is_selecting; }
 
     // マウス・キー操作によるアクション
-    void startSelection(int mx, int my);
-    void recordSelection(int mx, int my);
-    void cutSelection(Camera* camera);
+    void startSelection(int mx, int my, Camera* camera);
+    void recordSelection(int mx, int my, Camera* camera);
+    void cutSelection();
     void scaleSelection(float scale_factor, Camera* camera);
     void moveSelection(int dx, int dy, Camera* camera);
     void rotateSelection(int last_x, int last_y, int x, int y, Camera* camera); // ★ 追加
     void pasteSelection();
-    void updateScreenPath(Camera* camera); // ★ 追加
 
     // 外部から画像をインポートしたときの処理（旧: imp_img の一部）
     void importFloatingPoints(const std::vector<CloudPoint>& new_floats);
 
     // 描画処理 (display関数から呼ばれる)
-    void draw(Camera* camera, int win_w, int win_h);
+    void draw() const;
 
 private:
     // 内部処理用
     void rasterizePoints(LayerManager* layerMgr);
-    bool isInPolyScreen(float x, float y) const;
-    void drawLassoLine(int win_w, int win_h) const;
+    void drawLassoLine() const;
 };
 
 #endif

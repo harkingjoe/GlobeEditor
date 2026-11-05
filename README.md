@@ -1,4 +1,4 @@
-# globe_editor
+# GlobeEditor
 
 ゼロから始めるGit生活
 

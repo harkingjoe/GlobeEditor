@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 harkingjoe
+// SPDX-License-Identifier: MIT
 /*Undo/Redo用のバッファスタック管理*/
 
 #ifndef __HISTORYMANAGER_H__

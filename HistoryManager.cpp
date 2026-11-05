@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 harkingjoe
+// SPDX-License-Identifier: MIT
 #include "HistoryManager.h"
 #include <cstdlib>
 #include <cstring>

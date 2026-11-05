@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 harkingjoe
+// SPDX-License-Identifier: MIT
 /*画面上のボタン、メニュー、文字の描画と、UIに対するクリック判定*/
 
 #ifndef __UIMANAGER_H__

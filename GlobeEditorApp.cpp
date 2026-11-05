@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 harkingjoe
+// SPDX-License-Identifier: MIT
 #include "GlobeEditorApp.h"
 #include "LayerManager.h"
 #include "HistoryManager.h"
@@ -12,14 +14,45 @@
 #include <cstring>  // memset用
 #include <cstdlib>  // exit(0)用
 #include <cstdio>   // fprintf用
+#include <string>   // curlのコマンド組み立て用
 #include <vector>   // std::vector用
+#include <sys/stat.h> // lstat用
 
 
 extern void timerSaveCallback(int value);
 
 const char* const GlobeEditorApp::IN_FILE = "map_initial.PNG";
 
-bool GlobeEditorApp::canLoadBaseImage() {
+static const char* const BASE_IMAGE_URL =
+    "https://raw.githubusercontent.com/harkingjoe/globe_editor/main/map_initial.PNG";
+static const char* const BASE_IMAGE_TMP = "map_initial.PNG.download";
+
+// 既定の背景画像をGitHubから取得する。途中で失敗しても IN_FILE は作らない
+static bool downloadBaseImage() {
+    std::fprintf(stderr, "%s not found. Downloading from %s\n",
+                 GlobeEditorApp::IN_FILE, BASE_IMAGE_URL);
+
+    const std::string cmd = std::string("curl -fsSL --max-time 120 -o '") + BASE_IMAGE_TMP
+                          + "' '" + BASE_IMAGE_URL + "' 1>&2";
+    int w, h, c;
+    if (std::system(cmd.c_str()) != 0 || !stbi_info(BASE_IMAGE_TMP, &w, &h, &c)) {
+        std::remove(BASE_IMAGE_TMP);
+        std::fprintf(stderr, "Failed to download base image\n");
+        return false;
+    }
+    if (std::rename(BASE_IMAGE_TMP, GlobeEditorApp::IN_FILE) != 0) {
+        std::remove(BASE_IMAGE_TMP);
+        std::fprintf(stderr, "Failed to create: %s\n", GlobeEditorApp::IN_FILE);
+        return false;
+    }
+    return true;
+}
+
+bool GlobeEditorApp::prepareBaseImage() {
+    // リンク切れは「指定された画像がない」状態なので取得しない (lstatでリンク自体を確認する)
+    struct stat st;
+    if (lstat(IN_FILE, &st) != 0 && !downloadBaseImage()) return false;
+
     int w, h, c;
     return stbi_info(IN_FILE, &w, &h, &c) != 0;
 }
@@ -58,7 +91,7 @@ void GlobeEditorApp::init() {
     glColor3f(1.0f, 1.0f, 1.0f);
 
     // 画像とレイヤーの読み込み
-    // canLoadBaseImage() はヘッダーしか見ないため、壊れた画像はここで検出する
+    // prepareBaseImage() はヘッダーしか見ないため、壊れた画像はここで検出する
     if (!layerMgr->loadBaseImage(IN_FILE)) {
         std::fprintf(stderr, "Failed to load base image: %s\n", IN_FILE);
         std::exit(EXIT_FAILURE);

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 harkingjoe
+// SPDX-License-Identifier: MIT
 #include "UIManager.h"
 #include <cstdio>
 #include <cstdlib>

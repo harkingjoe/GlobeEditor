@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 harkingjoe
+// SPDX-License-Identifier: MIT
 /*3Dベクトル計算、座標変換、当たり判定など、状態を持たない純粋な計算処理*/
 
 #ifndef __MATHUTILS_H__

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 harkingjoe
+// SPDX-License-Identifier: MIT
 #include "GlobeEditorApp.h"
 #include <GL/freeglut.h>
 #include <cstdio>
@@ -26,8 +28,8 @@ void timerSaveCallback(int value) {
 // メイン関数
 // ---------------------------------------------------------
 int main(int argc, char** argv) {
-    // 背景画像がなければウィンドウを開かずに異常終了する
-    if (!GlobeEditorApp::canLoadBaseImage()) {
+    // 背景画像を用意できなければウィンドウを開かずに異常終了する
+    if (!GlobeEditorApp::prepareBaseImage()) {
         std::fprintf(stderr, "Base image not found or not readable: %s\n", GlobeEditorApp::IN_FILE);
         return 1;
     }

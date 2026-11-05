@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 harkingjoe
+// SPDX-License-Identifier: MIT
 /*視点の管理、画面座標と3D空間の変換*/
 
 #ifndef __CAMERA_H__

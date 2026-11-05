@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 harkingjoe
+// SPDX-License-Identifier: MIT
 #include "BrushTool.h"
 #include "LayerManager.h"
 #include "Camera.h"

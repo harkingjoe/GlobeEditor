@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 harkingjoe
+// SPDX-License-Identifier: MIT
 /*Lassoツールロジックの管理*/
 
 #ifndef __LASSOTOOL_H__

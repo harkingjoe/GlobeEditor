@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 harkingjoe
+// SPDX-License-Identifier: MIT
 /*ピクセル配列の管理、レイヤーの合成、ファイル入出力*/
 
 #ifndef __LAYERMANAGER_H__

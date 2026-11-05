@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 harkingjoe
+// SPDX-License-Identifier: MIT
 #include "LayerManager.h"
 #include <cstdlib>
 #include <cstring>

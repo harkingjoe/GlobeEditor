@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 harkingjoe
+// SPDX-License-Identifier: MIT
 #include "MathUtils.h"
 
 Vec3 add(Vec3 a, Vec3 b) {

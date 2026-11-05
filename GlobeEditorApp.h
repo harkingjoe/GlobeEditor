@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 harkingjoe
+// SPDX-License-Identifier: MIT
 /*各クラスのインスタンスを保持し、処理を統括する。GLUTからのコールバックを受け取る窓口*/
 
 #ifndef __GLOBEEDITORAPP_H_
@@ -49,8 +51,9 @@ public:
     GlobeEditorApp(int w, int h);
     ~GlobeEditorApp();
 
-    // ウィンドウを開く前に背景画像を読めるか確認する
-    static bool canLoadBaseImage();
+    // ウィンドウを開く前に背景画像を用意する
+    // ファイルがなければGitHubから取得し、読める画像があれば true を返す
+    static bool prepareBaseImage();
 
     // 初期化
     void init();

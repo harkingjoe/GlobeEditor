@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 harkingjoe
+# SPDX-License-Identifier: MIT
+
 # コンパイラの指定
 CXX = g++
 

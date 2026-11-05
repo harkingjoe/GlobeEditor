@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 harkingjoe
+// SPDX-License-Identifier: MIT
 /*Brushツールの管理*/
 
 #ifndef __BRUSHTOOL_H__

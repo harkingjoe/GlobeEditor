@@ -1,5 +1,6 @@
 #include "GlobeEditorApp.h"
 #include <GL/freeglut.h>
+#include <cstdio>
 
 // アプリケーション全体を管理するグローバルポインタ
 GlobeEditorApp* g_app = nullptr;
@@ -25,6 +26,12 @@ void timerSaveCallback(int value) {
 // メイン関数
 // ---------------------------------------------------------
 int main(int argc, char** argv) {
+    // 背景画像がなければウィンドウを開かずに異常終了する
+    if (!GlobeEditorApp::canLoadBaseImage()) {
+        std::fprintf(stderr, "Base image not found or not readable: %s\n", GlobeEditorApp::IN_FILE);
+        return 1;
+    }
+
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(800, 600);

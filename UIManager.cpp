@@ -46,6 +46,7 @@ UIManager::UIManager() {
     is_saving = false;
     is_exporting = false;
     last_msg_type = 0;
+    last_msg_failed = false;
 
     // ★ 追加
     land_ratio = 0.0f;
@@ -72,9 +73,12 @@ void UIManager::startExportMessage() {
     last_msg_type = 0;
 }
 
-void UIManager::finishMessage(int type) {
+void UIManager::finishMessage(int type, bool success) {
     if (type == 1) { is_saving = false; last_msg_type = 1; }
     else if (type == 2) { is_exporting = false; last_msg_type = 2; }
+
+    last_msg_failed = !success;
+    if (!success) save_msg_timer = 600; // 失敗は見落とさないよう長めに表示する
 }
 
 void UIManager::updateMessageTimer() {
@@ -264,7 +268,7 @@ void UIManager::drawCircCol(float x, float y, float rad, const unsigned char* co
     drawCirc(x, y, rad);
 }
 
-void UIManager::drawStrOutline(float x, float y, const char* str, float alpha) {
+void UIManager::drawStrOutline(float x, float y, const char* str, float r, float g, float b, float alpha) {
     void* font = GLUT_BITMAP_HELVETICA_18; 
     glColor4f(0.0f, 0.0f, 0.0f, alpha);
     float offsets[8][2] = {{-1,-1}, {0,-1}, {1,-1}, {-1, 0}, {1, 0}, {-1, 1}, {0, 1}, {1, 1}};
@@ -272,7 +276,7 @@ void UIManager::drawStrOutline(float x, float y, const char* str, float alpha) {
         glRasterPos2f(x + offsets[i][0], y + offsets[i][1]);
         for (const char* c = str; *c != '\0'; c++) glutBitmapCharacter(font, *c);
     }
-    glColor4f(0.2f, 1.0f, 0.2f, alpha); 
+    glColor4f(r, g, b, alpha);
     glRasterPos2f(x, y);
     for (const char* c = str; *c != '\0'; c++) glutBitmapCharacter(font, *c);
 }
@@ -417,8 +421,13 @@ void UIManager::draw(int win_w, int win_h, bool is_lasso_mode, bool has_floating
 
         if (is_saving) { msg_text = "Saving..."; r = 1.0f; g = 1.0f; b = 0.2f; }
         else if (is_exporting) { msg_text = "Exporting..."; r = 0.2f; g = 1.0f; b = 1.0f; }
+        else if (last_msg_failed) {
+            r = 1.0f; g = 0.2f; b = 0.2f;
+            if (last_msg_type == 1) msg_text = "Save Failed";
+            else if (last_msg_type == 2) msg_text = "Export Failed";
+        }
         else {
-            r = 0.2f; g = 1.0f; b = 0.2f; 
+            r = 0.2f; g = 1.0f; b = 0.2f;
             if (last_msg_type == 1) msg_text = "Project Saved";
             else if (last_msg_type == 2) msg_text = "Export Completed";
         }
@@ -442,8 +451,7 @@ void UIManager::draw(int win_w, int win_h, bool is_lasso_mode, bool has_floating
             glColor4f(0.0f, 0.0f, 0.0f, 0.6f * alpha);
             glRectf(mx - bw/2, my - 20, mx + bw/2, my + 10);
             
-            glColor4f(r, g, b, alpha);
-            drawStrOutline(mx - (float)text_w / 2.0f, my, msg_text, alpha);
+            drawStrOutline(mx - (float)text_w / 2.0f, my, msg_text, r, g, b, alpha);
             
             glColor3f(1, 1, 1);
             glDisable(GL_BLEND);

@@ -11,10 +11,18 @@
 
 #include <cstring>  // memset用
 #include <cstdlib>  // exit(0)用
+#include <cstdio>   // fprintf用
 #include <vector>   // std::vector用
 
 
 extern void timerSaveCallback(int value);
+
+const char* const GlobeEditorApp::IN_FILE = "map_initial.PNG";
+
+bool GlobeEditorApp::canLoadBaseImage() {
+    int w, h, c;
+    return stbi_info(IN_FILE, &w, &h, &c) != 0;
+}
 
 GlobeEditorApp::GlobeEditorApp(int w, int h) : win_w(w), win_h(h) {
     layerMgr   = new LayerManager();
@@ -50,7 +58,11 @@ void GlobeEditorApp::init() {
     glColor3f(1.0f, 1.0f, 1.0f);
 
     // 画像とレイヤーの読み込み
-    layerMgr->loadBaseImage(IN_FILE);
+    // canLoadBaseImage() はヘッダーしか見ないため、壊れた画像はここで検出する
+    if (!layerMgr->loadBaseImage(IN_FILE)) {
+        std::fprintf(stderr, "Failed to load base image: %s\n", IN_FILE);
+        std::exit(EXIT_FAILURE);
+    }
     layerMgr->loadLayer(LYR_F);
     
     // HistoryManager に正しいデータサイズを知らせるため再確保
@@ -441,11 +453,13 @@ void GlobeEditorApp::performSaveTask(int type) {
     calculateAreaRatio();
 
     if (type == 0) {
-        layerMgr->saveLayer(LYR_F);
-        uiMgr->finishMessage(1);
+        const bool saved = layerMgr->saveLayer(LYR_F);
+        if (!saved) std::fprintf(stderr, "Failed to save: %s\n", LYR_F);
+        uiMgr->finishMessage(1, saved);
     } else {
-        layerMgr->exportComposite(OUT_FILE);
-        uiMgr->finishMessage(2);
+        const bool exported = layerMgr->exportComposite(OUT_FILE);
+        if (!exported) std::fprintf(stderr, "Failed to export: %s\n", OUT_FILE);
+        uiMgr->finishMessage(2, exported);
     }
 
     if (was_lasso) lassoTool->enterMode(layerMgr);

@@ -39,6 +39,7 @@ private:
     bool is_saving;
     bool is_exporting;
     int last_msg_type; // 0=None, 1=Save(Project), 2=Export
+    bool last_msg_failed; // 直前のセーブ・エクスポートが失敗したか
 
     // --- ★ 面積比表示用 ---
     float land_ratio;
@@ -61,7 +62,7 @@ public:
     // --- メッセージ表示制御 ---
     void startSaveMessage();
     void startExportMessage();
-    void finishMessage(int type); // type: 1=Save, 2=Export
+    void finishMessage(int type, bool success); // type: 1=Save, 2=Export
     void updateMessageTimer();
     
     // ★ 面積比をセットする関数
@@ -94,7 +95,7 @@ private:
     void drawStr(float x, float y, const char* str);
     void drawCirc(float x, float y, float rad);
     void drawCircCol(float x, float y, float rad, const unsigned char* col);
-    void drawStrOutline(float x, float y, const char* str, float alpha);
+    void drawStrOutline(float x, float y, const char* str, float r, float g, float b, float alpha);
     
     void* getFont();
     int getLineStep();

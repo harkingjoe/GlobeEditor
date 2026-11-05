@@ -38,15 +38,19 @@ private:
     bool tex_dirty; // テクスチャの更新が必要かフラグ
 
     // --- ファイルパス設定 ---
-    const char* IN_FILE  = "map_initial.PNG";
     const char* MID_F    = "map_middle.PNG";
     const char* INS_F    = "insert.PNG";
     const char* LYR_F    = "saved_layer.png";
     const char* OUT_FILE = "map_edited.png";
 
 public:
+    static const char* const IN_FILE; // 背景画像
+
     GlobeEditorApp(int w, int h);
     ~GlobeEditorApp();
+
+    // ウィンドウを開く前に背景画像を読めるか確認する
+    static bool canLoadBaseImage();
 
     // 初期化
     void init();

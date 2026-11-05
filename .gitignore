@@ -39,3 +39,13 @@
 
 # debug information files
 *.dwo
+
+# Trial images and generated files
+.claude/
+GlobeEditor
+insert.PNG
+map_PlateBoundaries.PNG
+map_edited.png
+map_initial-*.PNG
+map_middle*.PNG
+saved_layer*.png

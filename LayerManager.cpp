@@ -3,6 +3,7 @@
 #include <cstring>
 #include <algorithm>
 #include <cstdio>
+#include <cmath>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -89,27 +90,49 @@ bool LayerManager::loadMiddleLayer(const char* fname) {
         return false;
     }
 
-    if (w == img_w && h == img_h) {
-        if (img_middle) std::free(img_middle);
-        img_middle = (unsigned char*)std::malloc(w * h * 4);
-
-        // 上下反転してコピー
-        int stride = w * 4;
-        for (int y = 0; y < h; y++) {
-            unsigned char* src_row = dat + (y * stride);
-            unsigned char* dst_row = img_middle + ((h - 1 - y) * stride);
-            std::memcpy(dst_row, src_row, stride);
-        }
-
-        updateCompositeAll();
-        printf("Loaded middle layer (flipped): %s\n", fname);
+    if (img_w <= 0 || img_h <= 0) {
+        printf("Base image is not loaded.\n");
         stbi_image_free(dat);
-        return true;
+        return false;
     }
-    
-    printf("Size mismatch!\n");
+
+    // 縦横比の差が1%を超える画像は読み込まない
+    const double src_ratio = static_cast<double>(w) / h;
+    const double dst_ratio = static_cast<double>(img_w) / img_h;
+    if (std::abs(src_ratio - dst_ratio) > dst_ratio * 0.01) {
+        printf("Aspect ratio mismatch!\n");
+        stbi_image_free(dat);
+        return false;
+    }
+
+    const size_t dst_w = img_w;
+    const size_t dst_h = img_h;
+    unsigned char* resized = (unsigned char*)std::malloc(dst_w * dst_h * 4);
+    if (!resized) {
+        printf("Out of memory: %s\n", fname);
+        stbi_image_free(dat);
+        return false;
+    }
+
+    // 最近傍補間で背景サイズに変換し、上下反転して格納する
+    // (合成時に半透明の画素を不透明として描くため、滑らかな補間は使わない)
+    for (size_t y = 0; y < dst_h; y++) {
+        const size_t src_y = y * h / dst_h;
+        for (size_t x = 0; x < dst_w; x++) {
+            const size_t src_x = x * w / dst_w;
+            const unsigned char* src = dat + (src_y * w + src_x) * 4;
+            unsigned char* dst = resized + ((dst_h - 1 - y) * dst_w + x) * 4;
+            std::memcpy(dst, src, 4);
+        }
+    }
+
+    if (img_middle) std::free(img_middle);
+    img_middle = resized;
+
+    updateCompositeAll();
+    printf("Loaded middle layer (flipped): %s (%dx%d -> %dx%d)\n", fname, w, h, img_w, img_h);
     stbi_image_free(dat);
-    return false;
+    return true;
 }
 
 void LayerManager::unloadMiddleLayer() {

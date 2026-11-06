@@ -24,7 +24,7 @@ extern void timerSaveCallback(int value);
 const char* const GlobeEditorApp::IN_FILE = "map_initial.PNG";
 
 static const char* const BASE_IMAGE_URL =
-    "https://raw.githubusercontent.com/harkingjoe/globe_editor/main/map_initial.PNG";
+    "https://raw.githubusercontent.com/harkingjoe/GlobeEditor/main/map_initial.PNG";
 static const char* const BASE_IMAGE_TMP = "map_initial.PNG.download";
 
 // 既定の背景画像をGitHubから取得する。途中で失敗しても IN_FILE は作らない
